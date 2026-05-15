@@ -1,191 +1,223 @@
-# PicoKiosk
+# pico4-adb-debloat
 
-**Kiosk-mode launcher for PICO 4 (and possibly Meta Quest) VR headsets**  
-Based on [PicoZen](https://github.com/barnabwhy/PicoZen) by [barnabwhy](https://github.com/barnabwhy), with major modifications for restricted public use.
+Windows ADB batch script to debloat and tune the **Pico 4** VR headset:  
+disable bloatware, apply performance tweaks, manage package configs and install APKs — **without root**. [page:1]
 
-> ⚠️ Unofficial project – not affiliated with PICO or Meta.  
-> ✅ Designed for scenarios where a VR headset is shared by multiple users (museums, showrooms, training, demo stands, etc.).  
-> 🔒 Locks the user into approved apps only – no access to system settings, home button, notification bar.
+> ⚠️ Use at your own risk. This script is tailored for stock Pico 4 firmware.  
+> ❗ Do **not** run it on other Android devices.
 
-PicoKiosk is usually used **together** with the companion tool  
-[`pico4-adb-debloat`](https://github.com/it03lab-ops/pico4-adb-debloat),  
-which prepares the headset for kiosk deployment (disables bloatware, locks the store and system UI, applies tweaks, installs required APKs). [page:1]
+A common use case is preparing the headset for kiosk deployments and then installing a kiosk launcher such as [PicoKiosk](https://github.com/it03lab-ops/PicoKiosk). [page:0][page:1]
 
 ---
 
-## Why two projects?
+## Features
 
-PicoKiosk and `pico4-adb-debloat` solve different parts of the kiosk puzzle:
+- **Debloat via ADB:**
+  - Disable / enable vendor and system packages using `pm disable-user` / `pm enable`. [page:1]
+  - Grouped into sections (safe removals, optional apps, core services, etc.).
 
-| Layer                      | Tool                         | Purpose |
-|---------------------------|------------------------------|---------|
-| System / firmware level   | `pico4-adb-debloat`          | Clean and harden the system via ADB (disable bloatware, lock store and settings, apply performance tweaks, manage configs, install APKs). [page:1] |
-| Application / UI level    | PicoKiosk (this repo)        | Replace the default launcher with a locked-down app selector (whitelist), block access to system UI and restrict user navigation. [page:0] |
+- **Kiosk‑oriented tweaks:**
+  - Section dedicated to locking down the device for kiosk use:
+    - Disable store and content discovery.
+    - Block system settings and some file dialogs.
+    - Remove obvious escape routes to the stock launcher. [page:1]
 
-You can use PicoKiosk alone, but **for a real kiosk-like, tamper-resistant setup on Pico 4** it is strongly recommended to run `pico4-adb-debloat` first and then install and configure PicoKiosk. [page:0][page:1]
+- **Configuration management:**
+  - Save current package state (enabled/disabled) to `pico4_config.txt`.  
+  - Apply the same configuration on another headset or after reset. [page:1]
 
----
+- **APK management:**
+  - Scan the local `apk/` folder.  
+  - Install one or all APKs via `adb install` / `adb install -r`. [page:1]
 
-## 🎯 Features (vs original PicoZen)
-
-| Feature                                               | PicoZen (original) | PicoKiosk (this fork) |
-|-------------------------------------------------------|--------------------|------------------------|
-| Show all installed apps                               | ✅                 | ❌ (whitelist only)    |
-| Admin-controlled app whitelist                        | ❌                 | ✅                     |
-| Block system settings access                          | ❌                 | ✅                     |
-| Block notification bar / quick settings               | ❌                 | ✅                     |
-| Prevent exit to system launcher (HOME button)         | ❌                 | ✅                     |
-| Sideloading APKs                                      | ✅                 | ✅ (optional)          |
-| Password-protected settings                           | ❌                 | ✅                     |
-| Password-protected “Hidden” apps list                 | ❌                 | ✅                     |
+- **No root required:**
+  - Everything is done via standard ADB commands.
 
 ---
 
-## 🔗 Companion tool: pico4-adb-debloat
+## Requirements
 
-[`pico4-adb-debloat`](https://github.com/it03lab-ops/pico4-adb-debloat) is a Windows batch script to **debloat and tune** a Pico 4 headset via ADB. [page:1]
-
-Key capabilities:
-
-- Disable / enable selected system and vendor apps (`pm disable-user` / `pm enable`). [page:1]  
-- Several logical sections, including:
-  - Safe removals (telemetry, demos, extra services).
-  - Core apps (launcher, browser, TOB apps, etc.).
-  - Optional packages and performance/network tweaks.
-  - **Kiosk mode** section – lock down store, settings, file dialogs and other escape routes. [page:1]
-- Configuration file support:
-  - Save current package state into `pico4_config.txt`.  
-  - Apply the same configuration on another device. [page:1]
-- Simple APK installer:
-  - Scan `apk/` folder and install one or all APKs via `adb install` / `adb install -r`. [page:1]
-
-Using it before deploying PicoKiosk allows you to:
-
-- Remove distractions and bloatware from system UI.  
-- Disable system store and built-in launchers that can be used to escape.  
-- Apply the same hardened config to multiple headsets.
-
-See the full documentation in the [`pico4-adb-debloat` README](https://github.com/it03lab-ops/pico4-adb-debloat). [page:1]
+- Windows 10/11 PC.  
+- ADB installed and available in `PATH` (or placed next to the script).  
+- Pico 4 headset with:
+  - Developer mode enabled.
+  - USB debugging enabled. [page:1]
 
 ---
 
-## ⚙️ Recommended deployment flow (Pico 4)
+## Usage
 
-1. **Prepare the headset with `pico4-adb-debloat`:** [page:1]  
-   - Enable developer mode and USB debugging on Pico 4.  
-   - Connect the headset to a Windows PC with ADB installed.  
-   - Run the script, go through the sections:
-     - Remove / disable bloatware and non-essential apps.
-     - Lock down store, system settings and file dialogs (kiosk section).
-     - Install required APKs (your app, PicoKiosk, additional tools) from the `apk/` folder.
-
-2. **Install and configure PicoKiosk:** [page:0]  
-   - Build or download the PicoKiosk APK (see below).  
-   - Sideload it via ADB or SideQuest.  
-   - Launch PicoKiosk from the system launcher.  
-   - Open the settings (protected by password) and:
-     - Set / change admin password.  
-     - Configure the app whitelist (only apps you want users to see).  
-     - Adjust other options (start on boot, icon caching, etc.).  
-
-3. **Set PicoKiosk as default launcher (home app):**  
-   - On Pico 4, you may need ADB to force PicoKiosk as the home activity, for example:  
-     `adb shell pm set-home-activity com.yourname.picokiosk/.MainActivity`  
-   - Confirm that pressing the Home or system button always returns to PicoKiosk and not to the stock launcher.
-
-4. **Test escape paths:**  
-   - Try notification bar, quick settings, store, system dialogs, etc.  
-   - If you find an escape path, adjust:
-     - ADB debloat configuration (disable another package or feature).  
-     - PicoKiosk whitelist / hidden apps.
-
----
-
-## ⚠️ Compatibility & Caveats
-
-- **Primary target:** PICO 4 (tested on PICO 4). Should also work on Pico Neo 3 family, but not guaranteed. [page:0]  
-- **Meta Quest (Quest 2/3/Pro):** Untested. PicoZen was reported to work on Quest, so PicoKiosk may run, but system UI blocking will be limited because Meta’s VROS behaves differently. Use at your own risk. [page:0]  
-- **Android version requirement:** Android 10+ (typical for modern XR headsets). [page:0]  
-- `pico4-adb-debloat` is tailored specifically for Pico 4 stock firmware; do not use it on other devices. [page:1]  
-
----
-
-## 📥 Installation
-
-1. **Build or download PicoKiosk APK**
-
-   At the moment there are no prebuilt releases; you are expected to build from source:
+1. **Clone or download the repo**
 
    ```bash
-   git clone https://github.com/it03lab-ops/PicoKiosk.git
-   cd PicoKiosk
-   # Open in Android Studio, sync Gradle, then:
-   # Build -> Build APK(s)
+   git clone https://github.com/it03lab-ops/pico4-adb-debloat.git
+   cd pico4-adb-debloat
    ```
 
-   The APK will be located under `app/build/outputs/apk/…`. [page:0]
+2. **Connect the headset**
 
-2. **Sideload the APK**
+   - Connect Pico 4 to your PC via USB.  
+   - Confirm the USB debugging prompt inside the headset (Allow USB debugging). [page:1]
 
-   Use ADB or SideQuest to install the APK on your headset:
+3. **Run the script**
 
-   ```bash
-   adb install PicoKiosk-release.apk
-   ```
+   - Double-click `pico4-debloat.bat` (actual filename per repo) or run from terminal:
 
-3. **Launch PicoKiosk**
-
-   - Find PicoKiosk in the system app list and launch it once.  
-   - Grant any overlay / notification or storage permissions if requested (depending on your build config).
-
-4. **Set as default launcher**
-
-   - Use ADB to set PicoKiosk as the home activity, e.g.:
-
-     ```bash
-     adb shell pm set-home-activity com.yourname.picokiosk/.MainActivity
+     ```bat
+     pico4-debloat.bat
      ```
 
-   Replace `com.yourname.picokiosk` with the actual package name used in your build.
+   - Follow the on-screen menu:
+     - Choose sections to debloat.
+     - Apply kiosk-related tweaks if you plan to use a kiosk launcher.
+     - Optionally save or load a configuration file.
+     - Optionally install APKs from the `apk/` folder. [page:1]
 
-5. (Optional but recommended) **Run `pico4-adb-debloat`** before or after installing PicoKiosk to harden the system and remove escape paths. [page:1]
+4. **Combine with a kiosk launcher**
 
----
+   For kiosk scenarios, it’s recommended to:
 
-## 🔧 Building from source
-
-- Clone the repository:
-
-  ```bash
-  git clone https://github.com/it03lab-ops/PicoKiosk.git
-  cd PicoKiosk
-  ```
-
-- Open the project in **Android Studio**, let Gradle sync.  
-- Adjust `applicationId` and signing configs if you plan to distribute the APK.  
-- Build → **Build APK(s)** or **Generate Signed Bundle / APK**. [page:0]
+   - Run `pico4-adb-debloat` to harden the device.  
+   - Install a kiosk launcher such as [PicoKiosk](https://github.com/it03lab-ops/PicoKiosk). [page:0][page:1]  
+   - Set the launcher as the default home activity (via ADB).
 
 ---
 
-## 🧩 Relationship to PicoZen
+## Kiosk mode workflow (short)
 
-This project is a fork of [PicoZen](https://github.com/barnabwhy/PicoZen), which is a general-purpose VR launcher. PicoKiosk focuses specifically on **kiosk / locked-down deployments**, and therefore:
-
-- Removes or hides features that are not needed in kiosk scenarios.  
-- Adds password-protected settings and hidden apps pages.  
-- Integrates better with ADB-based hardening flows like `pico4-adb-debloat`. [page:0][page:1]
+1. Debloat the device, disable store and extra system UI using `pico4-adb-debloat`. [page:1]  
+2. Install your app(s) and the kiosk launcher APK.  
+3. Configure the launcher (whitelist apps, protect settings with password). [page:0]  
+4. Set the launcher as the default home app via `pm set-home-activity`.  
+5. Test all potential escape paths (store, settings, dialogs, notifications).
 
 ---
 
-## ❗ Disclaimer
+## Relationship to PicoKiosk
 
-- This software is provided **as is**, without any warranty.  
-- You are fully responsible for changes you apply to your devices, both via PicoKiosk and via `pico4-adb-debloat`.  
-- Always test on non-critical hardware before rolling out to public setups.
+`pico4-adb-debloat` is **not** a launcher itself. It prepares the system so that a kiosk launcher can work reliably.
+
+Recommended combo:
+
+- System level: `pico4-adb-debloat` for debloat + lock‑down.  
+- UI level: [PicoKiosk](https://github.com/it03lab-ops/PicoKiosk) as the actual kiosk launcher. [page:0][page:1]
+
+---
+
+## Disclaimer
+
+- This script is provided as‑is, without warranty of any kind.  
+- You are responsible for any changes applied to your device.  
+- Always test on non‑critical hardware before using in production.
 
 ---
 
 ## License
 
-- **PicoKiosk:** GPL-3.0, see [`LICENSE`](./LICENSE). [page:0]  
-- **pico4-adb-debloat:** MIT, see its [`LICENSE`](https://github.com/it03lab-ops/pico4-adb-debloat/blob/main/LICENSE). [page:1]
+MIT – see [`LICENSE`](./LICENSE). [page:1]
+
+---
+
+# 🇷🇺 Описание на русском
+
+`pico4-adb-debloat` — это batch‑скрипт для Windows, который управляет шлемом **Pico 4** через ADB:  
+помогает убрать лишние приложения, применить твики, сохранить/применить конфиг и установить APK **без root‑прав**. [page:1]
+
+Частый сценарий — подготовить шлем к киоск‑режиму и затем поставить лаунчер вроде [PicoKiosk](https://github.com/it03lab-ops/PicoKiosk). [page:0][page:1]
+
+---
+
+## Возможности
+
+- **Debloat через ADB:**
+  - отключение/включение пакетов (`pm disable-user` / `pm enable`);
+  - структура по разделам: безопасное отключение, опциональные пакеты, core‑сервисы и т.п. [page:1]
+
+- **Киоск‑режим:**
+  - отдельный блок настроек под киоск:
+    - отключение магазина и сервисов Discover;
+    - блокировка системных настроек и части файловых диалогов;
+    - закрытие очевидных выходов в стандартный лаунчер. [page:1]
+
+- **Работа с конфигами:**
+  - сохранение текущего состояния пакетов в `pico4_config.txt`;
+  - последующее применение этого же набора на других шлемах. [page:1]
+
+- **Установка APK:**
+  - сканирование папки `apk/`;
+  - установка выбранного или всех APK через `adb install` / `adb install -r`. [page:1]
+
+- **Без root:**
+  - используются только стандартные ADB‑команды.
+
+---
+
+## Требования
+
+- ПК с Windows 10/11.  
+- ADB в `PATH` или рядом со скриптом.  
+- Шлем Pico 4 с включённым:
+  - режимом разработчика,
+  - USB‑отладкой. [page:1]
+
+---
+
+## Как пользоваться
+
+1. **Склонировать репозиторий**
+
+   ```bash
+   git clone https://github.com/it03lab-ops/pico4-adb-debloat.git
+   cd pico4-adb-debloat
+   ```
+
+2. **Подключить шлем**
+
+   - Подключить Pico 4 по USB к ПК.  
+   - В шлеме подтвердить запрос «Разрешить USB‑отладку». [page:1]
+
+3. **Запустить скрипт**
+
+   - Двойной клик по `.bat`‑файлу (например `pico4-debloat.bat`), либо запуск из терминала:
+
+     ```bat
+     pico4-debloat.bat
+     ```
+
+   - В меню выбрать:
+     - какие пакеты отключать;
+     - нужно ли включить киоск‑настройки;
+     - сохранить ли текущий конфиг;
+     - устанавливать ли APK из папки `apk/`. [page:1]
+
+4. **Связка с киоск‑лаунчером**
+
+   Для режима киоска рекомендуется:
+
+   - сначала прогнать `pico4-adb-debloat`,  
+   - затем установить [PicoKiosk](https://github.com/it03lab-ops/PicoKiosk) как лаунчер; [page:0][page:1]  
+   - назначить его лаунчером по умолчанию через `pm set-home-activity`.
+
+---
+
+## Сценарий для киоск‑режима (коротко)
+
+1. Отключить всё лишнее и заблокировать магазин/настройки через `pico4-adb-debloat`.  
+2. Установить свои приложения и лаунчер (например, PicoKiosk).  
+3. В лаунчере настроить белый список и пароль на настройки. [page:0]  
+4. Назначить лаунчер home‑приложением.  
+5. Проверить, что пользователь не может выйти в системный интерфейс.
+
+---
+
+## Отказ от ответственности
+
+- Всё используется «как есть», без гарантий.  
+- Ответственность за любые изменения с устройством несёте вы.  
+- Перед боевым использованием тестируйте на резервном шлеме.
+
+---
+
+## Лицензия
+
+MIT — см. [`LICENSE`](./LICENSE). [page:1]
